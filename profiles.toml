@@ -1,0 +1,65 @@
+# Testing status is tracked per profile so a rebuild never silently
+# resets what is known to work on real hardware.
+#   status = untested | working | broken
+# --- testing status ---
+
+# SD-card profiles. Each one is a complete, self-contained overlay; deploying a
+# profile replaces whatever the previous one put on the card.
+#
+#   base    = install the standalone base stack (Skyline, ARCropolis, Smashline,
+#             CSK Collection, One Slot Effects, lib_paramconfig, nro-hook)
+#   layers  = workspace directories copied into ultimate/mods, in order.
+#             Later layers win on identical paths, so ordering is meaningful.
+#   selfcontained = an [[upstream]] entry that ships its OWN base stack, in
+#             which case `base` must be false and `layers` is ignored.
+#
+# Reskin layers compose safely with the added-character roster: added characters
+# inherit only cmn/camera/sound/bodymotion from their host's vanilla slot, never
+# model data, so replacing vanilla models and textures cannot reach them.
+# scripts/verify.py enforces that distinction.
+
+[roster]
+description = "Vanilla Ultimate + added characters"
+base = true
+layers = ["roster"]
+status = "working"
+tested_on = "2026-07-30"
+tested_notes = "Boots, CSS renders, added characters playable."
+
+[celshaded]
+description = "Added characters + Cel Shaded restyle of 30+ vanilla fighters"
+base = true
+layers = ["roster", "celshaded"]
+status = "untested"
+
+[fullreskin]
+description = "Added characters + a curated reskin for every vanilla fighter"
+base = true
+layers = ["roster", "reskin"]
+status = "working"
+tested_on = "2026-07-30"
+tested_notes = "Tested on console. Knuckles was non-functional on the pre-fix build (35 plugins, over the 33-module cap, plus bgm_property.bin / ui_mii_hat_db.prc conflicts). Now 30 plugins with those conflicts excluded."
+
+[hdr]
+description = "HewDraw Remix -- full-cast moveset overhaul (self-contained)"
+base = false
+selfcontained = "hdr"
+status = "untested"
+
+[chao5]
+description = "CHAO5 UN-Balance -- troll-mode cast + 10 merged added chars incl. Kamek"
+base = true
+layers = ["chao5"]
+# CHAO5 is a total conversion that registers 206 added slots across 27 host
+# fighters through its own plugin.nro. Its raw ui_chara_db.prc / ui_series_db.prc
+# are how it does that, not an oversight, and nothing else in this profile
+# competes for them. Its soundlabelinfo.sli WAS removed -- that one demonstrably
+# panics CSK via api/audio.rs.
+allow_raw_csk = true
+status = "untested"
+
+[nsfw]
+description = "Roster + full reskin, with adult skins swapped in where available"
+base = true
+layers = ["roster", "reskin", "nsfw"]
+status = "untested"

@@ -1,0 +1,179 @@
+# Pinned upstream components for the Smash Ultimate mod stack.
+#
+# Every entry is downloaded by scripts/fetch.sh and verified against its sha256.
+# A version bump is a one-line edit here; nothing downstream hardcodes versions.
+#
+# Checksums below were computed from actual downloads on 2026-07-29, not copied
+# from a release page.
+
+[meta]
+# Smash Ultimate version this stack targets. ARCropolis is compiled against a
+# specific game version and a mismatch is an instant crash on boot.
+# ARCropolis v4.0.7 added 13.0.4 support; v4.0.8 is current.
+# CONFIRM against the title screen (bottom right) before deploying.
+game_version = "13.0.4"
+title_id = "01006A800016E000"
+
+# ---------------------------------------------------------------------------
+# Base stack. Required for any mod to load at all.
+# ---------------------------------------------------------------------------
+
+# Code injection layer. Provides exefs/, which is what actually gets Skyline's
+# hooks into the game process. ARCropolis stopped bundling this — it is a
+# separate download now, and omitting it is the most common setup failure.
+[[upstream]]
+name = "skyline"
+version = "beta"
+url = "https://github.com/skyline-dev/skyline/releases/download/beta/skyline.zip"
+file = "skyline-beta.zip"
+sha256 = "d677c5bbbfbf55674b047c8d5d11f8a4d71b6a42fbc7ee4bf70f462b077c4ab0"
+kind = "zip"
+# Archive contains exefs/{main.npdm,subsdk9}, so it extracts into the title dir.
+dest = "atmosphere/contents/01006A800016E000"
+
+# The mod loader itself. Redirects file reads to sd:/ultimate/mods at runtime.
+[[upstream]]
+name = "arcropolis"
+version = "v4.0.8"
+url = "https://github.com/Raytwo/ARCropolis/releases/download/v4.0.8/release.zip"
+file = "arcropolis-v4.0.8-release.zip"
+sha256 = "fcfd9efcfa664e164eb9ed97850fcc2279180b6d150e6de731d2276fa9979b70"
+kind = "zip"
+# Archive is already fully pathed (atmosphere/contents/<tid>/romfs/skyline/
+# plugins/libarcropolis.nro), so it extracts at the SD root.
+dest = ""
+
+# Per-character code modding framework. Added characters need this to register
+# their own movesets and articles. NOTE: the repo moved from blu-dev/smashline-2
+# to HDR-Development/smashline — old URLs 301.
+[[upstream]]
+name = "smashline"
+version = "v1.6.6"
+url = "https://github.com/HDR-Development/smashline/releases/download/v1.6.6/libsmashline_plugin.nro"
+file = "libsmashline_plugin-v1.6.6.nro"
+sha256 = "05fca8fa5c745a2dc6578e9eb3f1ace187a9b45bb9efbf03af2ef96dbbaf46d2"
+kind = "raw"
+dest = "atmosphere/contents/01006A800016E000/romfs/skyline/plugins"
+
+# REMOVED: smush_extra_slots_effect_fix.
+#
+# It fixes effect glitches on added slots c08+, but its own README is explicit:
+#   "This plugin is not compatible with smashline 2, so if u installed
+#    smashline 2, you will crash."
+# https://github.com/ssbucarlos/smush_extra_slots_effect_fix
+#
+# It targets the Smashline 1 stack (requires nro_hook + smashline_hook). We ship
+# Smashline 2, which every current added-character mod is built against, so
+# shipping this alongside it is a guaranteed boot crash.
+#
+# Consequence of removing it: on added slots, a few vanilla fighters (sonic,
+# fox, yoshi, piranha plant, mewtwo, dark samus, duckhunt) can show mismatched
+# effect colours. That is cosmetic. A crash is not.
+#
+# scripts/verify.py enforces this pairing so it cannot be reintroduced silently.
+
+# The CSK Collection. THE load-bearing dependency for added characters.
+#
+# Added-character mods do not ship ui_chara_db.prc edits -- not one of the 31
+# does. They register their character-select entry at runtime by calling this
+# plugin's API (add_chara_db_entry_info) from inside their own plugin.nro.
+# Without it: no CSS entry is created, every host fighter's color_num stays at
+# the vanilla 8, slots c8+ are unreachable, and all 31 added characters are
+# simply invisible. It is also why 31 mods can coexist without a 31-way
+# ui_chara_db.prc conflict.
+#
+# Cited by name in the bundled READMEs of the mods themselves.
+# https://gamebanana.com/mods/499008
+#
+# The archive also bundles a dozen optional example mods (music tweaks, menu
+# flags, and some unrelated political content). Those are NOT dependencies, so
+# kind = "plugin_zip" takes only the .nro and leaves them out.
+[[upstream]]
+name = "csk_collection"
+version = "5.0.6"
+url = "https://gamebanana.com/dl/1745532"
+file = "csk-collection-5.0.6.zip"
+sha256 = "6a4c07f206d4b42945d08d86f1d5959c39d0c6f784b04236ee7f5e006b1cd64f"
+md5 = "323d6be25d2bff100dad4d3ae3b20bcb"
+kind = "plugin_zip"
+dest = "atmosphere/contents/01006A800016E000/romfs/skyline/plugins"
+
+# One Slot Effects -- the Smashline 2-compatible replacement for the effect fix
+# removed above. The archive is literally named for the game version
+# (one_slot_eff_13-0-4.zip), and its description states it requires 13.0.4 and
+# is "fully compatible with Smashline 2's transplanted effects".
+# 14 of the roster's bundled READMEs link to this mod; none link to the old one.
+# https://gamebanana.com/mods/549058
+[[upstream]]
+name = "one_slot_effects"
+version = "13.0.4"
+url = "https://gamebanana.com/dl/1485627"
+file = "one-slot-eff-13.0.4.zip"
+sha256 = "ef5dda48fc535b7718c677f62203a7fda2403f76398c55a7a3d0e26d9ec9ebe3"
+md5 = "cce4963822db181c6a32666c5edda63c"
+kind = "plugin_zip"
+dest = "atmosphere/contents/01006A800016E000/romfs/skyline/plugins"
+
+# lib_paramconfig. Exists specifically to stop stacked single-slot movesets
+# from crashing each other -- its README: "because they often hook the same
+# functions, they will cause crashes when multiple SSMs are active at once.
+# This plugin serves as a middleman". We stack 31 of them.
+# Also consumes the config_param.toml files the mods ship.
+[[upstream]]
+name = "lib_paramconfig"
+version = "6.5"
+url = "https://github.com/CSharpM7/lib_paramconfig/releases/download/6.5/libparam_config.nro"
+file = "libparam_config-6.5.nro"
+sha256 = "f014f3143ca8ff0b9b2dcbacdb07acc598c2a76cacd7f754097ea2a8f896889a"
+kind = "raw"
+install_as = "libparam_config.nro"
+dest = "atmosphere/contents/01006A800016E000/romfs/skyline/plugins"
+
+# nro-hook. Not imported by ARCropolis or Smashline 2 directly, but required
+# transitively by lib_paramconfig ("all end-users will need this as well").
+# HDR ships it for the same reason.
+[[upstream]]
+name = "nro_hook"
+version = "v0.4.0"
+url = "https://github.com/ultimate-research/nro-hook-plugin/releases/download/v0.4.0/libnro_hook.nro"
+file = "libnro_hook-v0.4.0.nro"
+sha256 = "ca7aec03aee49fea539dcb92569fea5bc5389f77377ba2a30e4d0b7ebd0255e6"
+kind = "raw"
+install_as = "libnro_hook.nro"
+dest = "atmosphere/contents/01006A800016E000/romfs/skyline/plugins"
+
+# ---------------------------------------------------------------------------
+# Workspace payloads.
+# ---------------------------------------------------------------------------
+
+# HewDraw Remix — full-cast moveset overhaul. Self-contained; owns its own
+# workspace because it rewrites params the vanilla-built roster mods rely on.
+# 1.34 GB.
+[[upstream]]
+name = "hdr"
+version = "v0.49.11"
+url = "https://github.com/HDR-Development/HDR-Releases/releases/download/v0.49.11/switch-package.zip"
+file = "hdr-v0.49.11-switch-package.zip"
+sha256 = "b7ca9333b0309f0f0893051d68b456a1bb3a8792a0eb1a16df9856d010ac7232"
+kind = "workspace"
+dest = "hdr"
+
+# ---------------------------------------------------------------------------
+# Mods that ship as part of the roster workspace but are pinned like upstream
+# because the roster depends on them structurally.
+# ---------------------------------------------------------------------------
+
+# Raises the character select screen ceiling from the game's default 91 slots
+# to 255. Required before installing more than a handful of added characters —
+# exceeding 91 without it crashes the CSS.
+# NOTE: archive nests everything under "Slots/", which unpack.sh strips.
+[[mod]]
+name = "css-91-255-layout-fix"
+gamebanana_id = 573626
+version = "1.255"
+url = "https://gamebanana.com/dl/1592208"
+file = "573626-css_91-255_slots.7z"
+sha256 = "e9960a9822a6358d68e06a52a2dea101c1831ec04ad12b6c3ebce450db5e7c2b"
+md5 = "0500a4a58ed797e74e1f5edbf7cfb689"
+kind = "7z"
+workspace = "roster"

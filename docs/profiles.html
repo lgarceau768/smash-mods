@@ -1,0 +1,301 @@
+<title>Smash Mod Profiles</title>
+<style>
+  :root{
+    --bg:#F3F4F6; --panel:#FFFFFF; --ink:#1B1D24; --muted:#5A5E6B; --line:#DDDFE6;
+    --accent:#473AC2; --accent-ink:#FFFFFF;
+    --ok:#1E8E4E; --warn:#B26A00; --bad:#C03434;
+    --chip-roster:#473AC2; --chip-chao5:#9A7B00; --chip-reskin:#0E7C74;
+    --chip-nsfw:#B0356B; --chip-cel:#0B7DA6; --chip-hdr:#C05621;
+    --mono:ui-monospace,'Cascadia Code','SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#12141A; --panel:#1A1D26; --ink:#E8E9EE; --muted:#9A9EAD; --line:#2A2E3B;
+    --accent:#7B6CFF; --accent-ink:#12141A;
+    --ok:#4CC97B; --warn:#E2A93B; --bad:#E06C6C;
+    --chip-roster:#7B6CFF; --chip-chao5:#D9B84A; --chip-reskin:#3FB8AE;
+    --chip-nsfw:#E5799F; --chip-cel:#54B8DF; --chip-hdr:#E5824E;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#12141A; --panel:#1A1D26; --ink:#E8E9EE; --muted:#9A9EAD; --line:#2A2E3B;
+    --accent:#7B6CFF; --accent-ink:#12141A;
+    --ok:#4CC97B; --warn:#E2A93B; --bad:#E06C6C;
+    --chip-roster:#7B6CFF; --chip-chao5:#D9B84A; --chip-reskin:#3FB8AE;
+    --chip-nsfw:#E5799F; --chip-cel:#54B8DF; --chip-hdr:#E5824E;
+  }
+  :root[data-theme="light"]{
+    --bg:#F3F4F6; --panel:#FFFFFF; --ink:#1B1D24; --muted:#5A5E6B; --line:#DDDFE6;
+    --accent:#473AC2; --accent-ink:#FFFFFF;
+    --ok:#1E8E4E; --warn:#B26A00; --bad:#C03434;
+    --chip-roster:#473AC2; --chip-chao5:#9A7B00; --chip-reskin:#0E7C74;
+    --chip-nsfw:#B0356B; --chip-cel:#0B7DA6; --chip-hdr:#C05621;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 20px 80px}
+  header h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  header .sub{color:var(--muted);margin:6px 0 0;max-width:64ch}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+  .strip{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:128px}
+  .stat b{display:block;font:700 20px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+  .stat span{font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+  .gauge{margin-top:8px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+  .gauge i{display:block;height:100%;width:91%;background:linear-gradient(90deg,var(--ok) 70%,var(--warn) 88%,var(--bad))}
+  section{margin-top:44px}
+  h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{color:var(--muted);margin:0 0 18px;max-width:70ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 18px 14px;display:flex;flex-direction:column;gap:10px}
+  .card .head{display:flex;align-items:center;gap:10px}
+  .dot{width:10px;height:10px;border-radius:3px;flex:none}
+  .card h3{margin:0;font:700 17px/1.2 var(--mono)}
+  .pill{margin-left:auto;flex:none;font:600 10.5px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid}
+  .p-ok{color:var(--ok);border-color:var(--ok)}
+  .p-warn{color:var(--warn);border-color:var(--warn)}
+  .desc{margin:0;color:var(--muted);font-size:13.5px}
+  .layers{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font:500 12px/1 var(--mono)}
+  .layers .l{background:color-mix(in srgb,var(--accent) 9%,transparent);border:1px solid var(--line);border-radius:5px;padding:4px 8px}
+  .layers .sep{color:var(--muted)}
+  .nums{display:flex;gap:16px;border-top:1px solid var(--line);padding-top:10px;font-variant-numeric:tabular-nums}
+  .nums div{font:600 14px/1.2 var(--mono)}
+  .nums small{display:block;font:400 10.5px/1.4 var(--sans);color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+  details{border-top:1px solid var(--line);padding-top:8px;font-size:13px}
+  summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:12.5px}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .names{margin:8px 0 2px;display:flex;flex-wrap:wrap;gap:5px}
+  .names em{font-style:normal;background:color-mix(in srgb,var(--ink) 5%,transparent);border:1px solid var(--line);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap}
+  .names em.hot{border-color:var(--chip-chao5)}
+  .note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .cmd{font:12.5px/1.5 var(--mono);background:color-mix(in srgb,var(--ink) 6%,transparent);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre}
+  .limits{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .limit{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:10px;padding:16px 18px}
+  .limit h3{margin:0 0 6px;font-size:15px;font-weight:700}
+  .limit p{margin:0;font-size:13.5px;color:var(--muted)}
+  .limit .fig{font:700 15px/1.4 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px}
+  th{text-align:left;font:600 11px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line)}
+  td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.mono, .mono{font:500 13px/1.5 var(--mono);font-variant-numeric:tabular-nums}
+  .tblwrap{overflow-x:auto;border-radius:10px}
+  .ok{color:var(--ok)} .warn{color:var(--warn)}
+  footer{margin-top:52px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+  @media (prefers-reduced-motion:no-preference){
+    .card{transition:border-color .15s}
+    .card:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">smash-mods &middot; switch 1 &middot; ultimate 13.0.4</p>
+  <h1>Six loadouts, one deploy command</h1>
+  <p class="sub">Every profile is a complete, verified SD overlay. Switching is
+  <span class="mono">./scripts/deploy.sh --profile &lt;name&gt; --commit</span> — rsync moves only the
+  difference and never touches saves or homebrew.</p>
+  <div class="strip">
+    <div class="stat"><b>6</b><span>profiles</span></div>
+    <div class="stat"><b>45</b><span>added characters total</span></div>
+    <div class="stat"><b>155</b><span>pinned &amp; checksummed mods</span></div>
+    <div class="stat" style="min-width:180px"><b>30<span style="color:var(--muted);font-weight:400"> / 33</span></b><span>plugin budget (os cap)</span>
+      <div class="gauge" aria-hidden="true"><i></i></div>
+    </div>
+    <div class="stat"><b>86/86</b><span>fighters unlocked (save)</span></div>
+  </div>
+</header>
+
+<section>
+  <h2>Profiles</h2>
+  <p class="lede">Layers stack left to right; a later layer replaces a same-named mod wholesale.
+  Status reflects what has actually been proven on the console, not just on the PC.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-roster)"></span><h3>roster</h3><span class="pill p-ok">working — on console</span></div>
+      <p class="desc">The daily driver. Vanilla balance, every fighter unlocked, 31 added characters each on a real CSS slot with its own name, voice and moveset.</p>
+      <div class="layers"><span class="l">base stack</span><span class="sep">▸</span><span class="l">roster</span></div>
+      <div class="nums">
+        <div>30<small>plugins</small></div>
+        <div>32<small>mods</small></div>
+        <div>11 GB<small>layer size</small></div>
+      </div>
+      <details><summary>Character manifest (31)</summary>
+        <div class="names">
+          <em>Shadow</em><em>Knuckles</em><em>Tails</em><em>Mecha Sonic</em><em>Chaos</em>
+          <em>Gogeta</em><em>Vegito</em><em>Z&nbsp;Broly</em>
+          <em>Iron&nbsp;Man</em><em>Spider-Man</em><em>Ultron</em>
+          <em>Paper&nbsp;Mario</em><em>Goomba</em><em>Magolor</em><em>Herobrine</em>
+          <em>Cuphead</em><em>Sans*</em><em>Springtrap</em><em>Phoenix&nbsp;Wright</em>
+          <em>Ichiban&nbsp;Kasuga</em><em>Monster&nbsp;Hunter</em><em>Mega&nbsp;Man&nbsp;X</em>
+          <em>Decidueye</em><em>Zeraora</em><em>Raichu</em>
+          <em>Alucard</em><em>Black&nbsp;Knight</em><em>Shadow&nbsp;Mewtwo</em>
+          <em>Sailor&nbsp;Moon</em><em>Hong&nbsp;Meiling</em><em>Sonic&nbsp;Re-Imagined&nbsp;(rework)</em>
+        </div>
+        <p class="note">*Sans and nine others also exist in CHAO5's merged form — the standalone
+        versions here were parked to fit the plugin budget; see CHAO5. Magolor pinned to 2025-11
+        (newer builds crash on select — upstream bug). Shadow ships a bonus Assist Trophy android.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-chao5)"></span><h3>chao5</h3><span class="pill p-warn">needs boot test</span></div>
+      <p class="desc">CHAO5 UN-Balance v2.1.7 — the troll universe. Whole cast deliberately overpowered, gliding and wavedash mechanics, custom CSS and stages, and ten added characters merged behind a <b>single</b> plugin.</p>
+      <div class="layers"><span class="l">base stack</span><span class="sep">▸</span><span class="l">chao5</span></div>
+      <div class="nums">
+        <div>1<small>plugin</small></div>
+        <div>2<small>mods</small></div>
+        <div>9.4 GB<small>layer size</small></div>
+      </div>
+      <details><summary>Its ten characters — incl. the unobtainable one</summary>
+        <div class="names">
+          <em class="hot">Kamek</em><em>Silver</em><em>Waluigi</em><em>Sans</em>
+          <em>Bandana&nbsp;Dee</em><em>Funky&nbsp;Kong</em><em>Krystal</em>
+          <em>Ninten</em><em>Masked&nbsp;Man</em><em>Blaziken</em>
+        </div>
+        <p class="note">Kamek's standalone mod is a dead upload on GameBanana — CHAO5 is the only
+        way to get him. Several of the ten are by the same authors as the standalones
+        (Challat's Waluigi, mRama's set). The Extra-Music addon is a separate mod and can be
+        dropped independently. Its raw <span class="mono">ui_chara_db.prc</span> is intentional
+        (how a total conversion registers 206 slots); its
+        <span class="mono">soundlabelinfo.sli</span> is stripped — that file panics CSK.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-reskin)"></span><h3>fullreskin</h3><span class="pill p-ok">working — on console</span></div>
+      <p class="desc">The roster plus a curated skin for ~86 vanilla fighters — top-rated per character, deduped against the roster (no double Shadows), conflict-stripped so skins can never poison added characters.</p>
+      <div class="layers"><span class="l">base stack</span><span class="sep">▸</span><span class="l">roster</span><span class="sep">▸</span><span class="l">reskin</span></div>
+      <div class="nums">
+        <div>30<small>plugins</small></div>
+        <div>138<small>mods</small></div>
+        <div>+11 GB<small>skin layer</small></div>
+      </div>
+      <details><summary>How it was fixed</summary>
+        <p class="note">The boot failure once blamed on memory was actually the plugin cap (35
+        plugins on the broken build) plus two raw file conflicts
+        (<span class="mono">bgm_property.bin</span>, <span class="mono">ui_mii_hat_db.prc</span>).
+        At 30 plugins with those excluded, it boots and plays at ~75k files. Highlights: Dry
+        Bowser, Octolings, Demon King Ganondorf, Kingdom Hearts Cloud &amp; Sephiroth, Pepsiman
+        over Falcon, The Rock over Incineroar, Kermit over Marth.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-nsfw)"></span><h3>nsfw</h3><span class="pill p-warn">untested</span></div>
+      <p class="desc">fullreskin with adult-rated skins swapped in wherever one exists — 22 fighters total. Same-name layering means each swap replaces that fighter's skin cleanly; everyone else keeps the standard reskin.</p>
+      <div class="layers"><span class="l">base stack</span><span class="sep">▸</span><span class="l">roster</span><span class="sep">▸</span><span class="l">reskin</span><span class="sep">▸</span><span class="l">nsfw</span></div>
+      <div class="nums">
+        <div>30<small>plugins</small></div>
+        <div>22<small>adult skins</small></div>
+        <div>+0.4 GB<small>swap layer</small></div>
+      </div>
+      <details><summary>Coverage (22 fighters)</summary>
+        <div class="names">
+          <em>Bayonetta</em><em>Byleth</em><em>Captain&nbsp;Falcon</em><em>Corrin</em>
+          <em>Daisy</em><em>Incineroar</em><em>Lucina</em><em>Marth</em><em>Mii&nbsp;Brawler</em>
+          <em>Min&nbsp;Min</em><em>Peach</em><em>Pit</em><em>Pyra/Mythra</em><em>Richter</em>
+          <em>Robin</em><em>Rosalina</em><em>Samus</em><em>Steve</em><em>WFT</em>
+          <em>Zelda</em><em>ZSS</em><em>+1</em>
+        </div>
+        <p class="note">Selected by GameBanana's per-mod content ratings, not title guessing.
+        Five were already the top pick in the reskin layer and carry over.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-cel)"></span><h3>celshaded</h3><span class="pill p-warn">untested</span></div>
+      <p class="desc">The light-touch restyle: one 294 MB pack giving 30+ fighters cel-shaded materials and alternate outfits. The low-risk way to make the cast look different without the full skin layer's memory cost.</p>
+      <div class="layers"><span class="l">base stack</span><span class="sep">▸</span><span class="l">roster</span><span class="sep">▸</span><span class="l">celshaded</span></div>
+      <div class="nums">
+        <div>30<small>plugins</small></div>
+        <div>33<small>mods</small></div>
+        <div>+294 MB<small>restyle</small></div>
+      </div>
+      <details><summary>Position in the lineup</summary>
+        <p class="note">Likely boots without bisecting (file count barely rises above the proven
+        roster). If fullreskin turns out to exceed the memory wall permanently, this is the
+        fallback aesthetic.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="dot" style="background:var(--chip-hdr)"></span><h3>hdr</h3><span class="pill p-warn">staged, untested</span></div>
+      <p class="desc">HewDraw Remix v0.49.11 — the competitive overhaul. Every vanilla fighter's moveset reworked with Melee/PM-style movement. Self-contained: ships its own forked ARCropolis, Skyline and Smashline.</p>
+      <div class="layers"><span class="l">hdr (own stack)</span></div>
+      <div class="nums">
+        <div>6<small>plugins (its own)</small></div>
+        <div>3<small>mods</small></div>
+        <div>2.8 GB<small>total</small></div>
+      </div>
+      <details><summary>Why it can't mix with the roster</summary>
+        <p class="note">Its binaries load at process start, outside ARCropolis's control, and it
+        rewrites cast-wide params the vanilla-built added characters inherit. It also patches the
+        <span class="mono">hid</span> system module (title 0100000000000013) — deploy.sh installs
+        and removes that patch correctly when switching.</p>
+      </details>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>The two walls</h2>
+  <p class="lede">Both measured on this hardware, not folklore. Every profile above is shaped by them.</p>
+  <div class="limits">
+    <div class="limit">
+      <h3>Plugin cap — an OS constraint</h3>
+      <p>Each mod's <span class="mono">plugin.nro</span> is chainloaded via
+      <span class="mono">nn::ro::LoadModule</span>; the OS allows 64 modules per process, shared
+      with the game itself and the fighter code it loads mid-match.</p>
+      <p class="fig">34th plugin ⇒ dies at boot &nbsp;·&nbsp; 30 = safe ceiling</p>
+      <p>Verified twice with different mods in position 34. The linter hard-errors past 33.
+      Merged packs (CHAO5: 10 characters, 1 plugin) are the only way to more characters.</p>
+    </div>
+    <div class="limit">
+      <h3>Memory — mostly exonerated</h3>
+      <p>The boot death once blamed on file-count OOM occurred on a build that was also over the
+      plugin cap (35) with two raw file conflicts. With those fixed, ~75k files boots and plays —
+      no file-count ceiling has actually been hit yet.</p>
+      <p class="fig">75k files ⇒ boots at 30 plugins</p>
+      <p>The bisect kit (<span class="mono">toggle_mods.sh</span>, pre-balanced halves) stays
+      ready for the day a real memory wall appears. RAM OC to 1600&nbsp;MHz steadies loading.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Base stack</h2>
+  <p class="lede">Pinned and checksum-verified in <span class="mono">manifest.toml</span>. All six load before any mod.</p>
+  <div class="tblwrap"><table>
+    <tr><th>Component</th><th>Version</th><th>Why it's load-bearing</th></tr>
+    <tr><td class="mono">Skyline</td><td class="mono">beta</td><td>Code injection — provides exefs/; a separate download from ARCropolis</td></tr>
+    <tr><td class="mono">ARCropolis</td><td class="mono">4.0.8</td><td>Mod loader + plugin chainloader; trace logging currently ON for diagnosis</td></tr>
+    <tr><td class="mono">Smashline&nbsp;2</td><td class="mono">1.6.6</td><td>Moveset framework every added character is built against</td></tr>
+    <tr><td class="mono">CSK&nbsp;Collection</td><td class="mono">5.0.6</td><td>Registers added characters' CSS entries at runtime — without it, all invisible</td></tr>
+    <tr><td class="mono">One&nbsp;Slot&nbsp;Effects</td><td class="mono">13.0.4</td><td>Per-slot VFX on added slots; the Smashline-2-compatible one</td></tr>
+    <tr><td class="mono">lib_paramconfig&nbsp;+&nbsp;nro_hook</td><td class="mono">6.5 / 0.4.0</td><td>Stops stacked single-slot movesets crashing each other</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Operating it</h2>
+  <div class="tblwrap"><table>
+    <tr><th>Task</th><th>Command</th></tr>
+    <tr><td>Switch profile</td><td class="mono">./scripts/deploy.sh --profile chao5 --commit</td></tr>
+    <tr><td>Full rebuild from pins</td><td class="mono">./scripts/build.sh</td></tr>
+    <tr><td>Card snapshot / restore</td><td class="mono">./scripts/backup.sh &nbsp;·&nbsp; --restore &lt;dir&gt; --commit</td></tr>
+    <tr><td>Bisect on the card</td><td class="mono">./scripts/toggle_mods.sh batch tests/bisect/skins-half1.txt on</td></tr>
+    <tr><td>Unlock a save's fighters</td><td class="mono">./scripts/unlock_save.py system_data.bin --commit</td></tr>
+    <tr><td>Read a crash</td><td class="mono">ultimate/arcropolis/logs/ — last lines name the culprit</td></tr>
+  </table></div>
+  <p class="note">Rules that keep it alive: offline / local play only (DNS-MITM + 90DNS, re-applied
+  per network) · ARCropolis auto-update off (its update host isn't Nintendo's, so DNS blocking
+  doesn't stop it) · never let the console update Smash — the entire stack is pinned to 13.0.4.</p>
+</section>
+
+<footer>
+  smash-mods · built &amp; verified on Linux, deployed by rsync · 155 pinned components ·
+  save unlock preserves WoL progress, tags, Miis &amp; replays
+</footer>
+</div>

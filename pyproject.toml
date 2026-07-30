@@ -1,0 +1,22 @@
+[project]
+name = "smash-mods"
+version = "0.1.0"
+description = "CLI for building, verifying, and deploying modded Super Smash Bros. Ultimate SD-card profiles onto a CFW Switch"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Luke Garceau" }]
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.scripts]
+smash-mods = "smash_mods_cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["smash_mods_cli"]

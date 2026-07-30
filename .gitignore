@@ -1,0 +1,27 @@
+# Checksum-verified cache and generated trees. Both are fully reproducible
+# from manifest.toml + roster.toml, and together run to several GB.
+# downloads/ and workspaces/ are symlinks to smash-mods-data/ — a trailing
+# slash only matches real directories, so the symlinks themselves are
+# ignored via the no-slash entries below (matches the link, not its target).
+downloads/
+build/
+workspaces/
+/downloads
+/workspaces
+
+# Fixture workspaces created by tests/test_verify.py (cleaned up on success,
+# left behind if a test crashes).
+workspaces/_fixture_*
+
+__pycache__/
+*.pyc
+.tmp/
+
+# smash-mods CLI (uv-managed venv; uv.lock IS committed for reproducibility)
+.venv/
+
+# Personal curation picks (added characters, reskins, NSFW swaps) -- changes
+# independently of the tooling and isn't something to publish. See
+# roster.toml.template for the schema; copy it to roster.toml and populate
+# by hand or with `smash-mods curate ...`.
+roster.toml

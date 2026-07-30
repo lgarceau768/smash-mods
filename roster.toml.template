@@ -1,0 +1,82 @@
+# Curated added-character / cosmetic roster -- TEMPLATE.
+#
+# roster.toml itself is gitignored: it's personal curation (which added
+# characters, whose reskins, which NSFW swaps) pinned by GameBanana id + md5,
+# and it changes independently of the tooling. Copy this file to
+# roster.toml and populate it -- by hand, or with:
+#
+#   smash-mods curate movesets --report --limit 60   # browse added-character picks
+#   smash-mods curate skins --report                  # browse vanilla-fighter reskins
+#   smash-mods curate nsfw --report                    # browse adult-rated skin swaps
+#
+# then re-run with --write to append picks here, or add [[mod]] blocks
+# yourself using the schema below. scripts/roster_edit.py's add_excludes()
+# is the safe way to add an `exclude` list to an existing entry -- it
+# validates the whole file with tomllib before writing, instead of a
+# hand-rolled regex edit that can corrupt the file.
+#
+# md5 is pinned so a silently re-uploaded mod fails loudly at fetch time
+# rather than becoming a mystery crash on the console. Slot collisions
+# between entries are caught by scripts/verify.py after unpacking -- that
+# is the check that actually makes a roster this size workable.
+
+# --- schema -------------------------------------------------------------
+#
+# [[mod]]
+# name          = "Some-Mod-Name"   # unique; becomes the workspace dir name
+# gamebanana_id = 123456            # GameBanana submission id
+# file          = "123456-some_mod.zip"   # exact archive filename to fetch
+# url           = "https://gamebanana.com/dl/1234567"   # direct download url
+# md5           = "0123456789abcdef0123456789abcdef"    # pinned checksum
+# workspace     = "roster"          # roster | reskin | nsfw | celshaded | chao5 | parked
+# variant       = "Slotted (Modern Style)"   # optional: pick a named variant from a
+#                                             # multi-variant archive (see unpack.py)
+# exclude       = ["path/to/file.ext"]       # optional: strip specific paths on unpack
+#                                             # (global DB files, files that panic CSK, etc.)
+# # free-text comment: display name + archive size, useful when skimming the file
+
+# --- example --------------------------------------------------------------
+# One illustrative entry per workspace kind. Delete these once you have real
+# picks -- verify.py doesn't know these ids are fake, so leaving them in would
+# make fetch.py try to actually download them.
+
+[[mod]]
+name = "Example-Added-Character"
+gamebanana_id = 0
+file = "0-example_moveset.zip"
+url = "https://gamebanana.com/dl/0"
+md5 = "00000000000000000000000000000000"
+workspace = "roster"
+# Example Added Character (Moveset)  (0KB)
+
+[[mod]]
+name = "Example-Reskin"
+gamebanana_id = 0
+file = "0-example_reskin.zip"
+url = "https://gamebanana.com/dl/0"
+md5 = "00000000000000000000000000000000"
+workspace = "reskin"
+# Example vanilla-fighter reskin, one per fighter in the `reskin` layer.
+
+[[mod]]
+name = "Example-Excluded-Slot"
+gamebanana_id = 0
+variant = "Example Variant"
+exclude = ["sound/param/soundlabelinfo.sli", "ui/param/database/ui_chara_db.prc"]
+file = "0-example_with_excludes.zip"
+url = "https://gamebanana.com/dl/0"
+md5 = "00000000000000000000000000000000"
+workspace = "chao5"
+# Shows the variant + exclude fields: pick a named variant, then strip global
+# database files a total-conversion profile manages itself (see README's
+# "allow_raw_csk" note).
+
+[[mod]]
+name = "Example-Parked-Mod"
+gamebanana_id = 0
+file = "0-example_parked.zip"
+url = "https://gamebanana.com/dl/0"
+md5 = "00000000000000000000000000000000"
+workspace = "parked"  # covered by chao5 profile or cut for plugin budget
+# `parked` mods are deliberately out of rotation. Un-park by changing
+# `workspace` to the profile you want them back in.
