@@ -88,20 +88,27 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--json", action="store_true",
+                     help="emit machine-readable candidate JSON instead of a human report (implies --report)")
+    ap.add_argument("--write-ids", help="comma-separated GameBanana ids to write, instead of every viable pick")
     args = ap.parse_args()
 
     have = existing_ids()
     subs = [c for c in get(SUBCATS.format(cat=SKINS_CATEGORY))
             if c["_sName"] not in SKIP_SUBCATS and c.get("_nItemCount", 0) > 0]
-    info(f"{len(subs)} character subcategories; {len(have)} ids already pinned")
+    if not args.json:
+        info(f"{len(subs)} character subcategories; {len(have)} ids already pinned")
 
     picks = []
     for i, sc in enumerate(subs, 1):
-        print(f"\r  scanning {i}/{len(subs)}", end="", flush=True)
+        # Progress goes to stderr (not suppressed in --json mode) so a caller
+        # capturing stdout for the final JSON can still show live progress.
+        print(f"\r  scanning {i}/{len(subs)}", end="", flush=True, file=sys.stderr)
         try:
             recs = get(INDEX.format(cat=sc["_idRow"])).get("_aRecords", [])
         except Exception as exc:
-            warn(f"{sc['_sName']}: {exc}")
+            if not args.json:
+                warn(f"{sc['_sName']}: {exc}")
             continue
         for r in recs:
             if not r.get("_bHasFiles") or r.get("_bIsObsolete"):
@@ -123,14 +130,23 @@ def main() -> int:
                               "ratings": names})
                 break
         time.sleep(0.15)
-    print()
-    info(f"{len(picks)} fighters have an adult-rated skin not already pinned")
+    print(file=sys.stderr)
+    if not args.json:
+        info(f"{len(picks)} fighters have an adult-rated skin not already pinned")
+
+    if args.json:
+        print(json.dumps(picks))
+        return 0
 
     if args.report or not args.write:
         for p in picks:
             print(f"  {p['character']:<20} {p['likes']:>4}  {p['name'][:40]:<40} [{p['ratings']}]")
-        if not args.write:
+        if not args.write and not args.write_ids:
             return 0
+
+    if args.write_ids:
+        wanted = {int(x) for x in args.write_ids.split(",") if x.strip()}
+        picks = [p for p in picks if p["id"] in wanted]
 
     lines = ["", "# ---- nsfw layer: adult-rated skin per fighter ----",
              "# Mod names intentionally MATCH the reskin layer's (Skin-<Char>) so the",

@@ -29,22 +29,15 @@ STATUS_STYLE = {
 }
 
 
-def _profile_plugin_count(prof: dict, common) -> int:
+def _profile_plugin_count(name: str, common) -> int:
     """Count mods with a plugin.nro across a profile's actual composition.
 
-    Layered profiles: the union of their layers, later layers overwriting
-    earlier ones by mod name -- same precedence stage_layered() applies when
-    it copies, so the count matches what actually reaches the card.
-    Self-contained profiles: every mod in their one workspace.
+    Delegates to common.profile_mods() -- the same composition (layers
+    merged with later-wins, or a selfcontained workspace as-is) that stages
+    onto the card, so this count can never drift from what actually reaches
+    it.
     """
-    if prof.get("selfcontained"):
-        mods = common.all_mods(prof["selfcontained"])
-    else:
-        chosen: dict[str, object] = {}
-        for layer in prof.get("layers", []):
-            for mod in common.all_mods(layer):
-                chosen[mod.name] = mod
-        mods = list(chosen.values())
+    mods = common.profile_mods(name)
     return sum(1 for m in mods if (m / "plugin.nro").is_file())
 
 
@@ -83,7 +76,7 @@ def render_profiles_table() -> Table:
     table.add_column("Tested on")
 
     for name, prof in sorted(profiles.items()):
-        n_plugins = _profile_plugin_count(prof, common)
+        n_plugins = _profile_plugin_count(name, common)
         status = prof.get("status", "untested")
         style = STATUS_STYLE.get(status, "yellow")
         table.add_row(

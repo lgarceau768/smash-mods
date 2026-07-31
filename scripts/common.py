@@ -149,24 +149,38 @@ def load_profiles() -> dict:
 
 
 def profile_mods(profile: str) -> list[Path]:
-    """Every mod directory a profile installs, across all of its layers.
+    """Every mod directory a profile installs.
 
-    Later layers come last so callers that care about precedence can rely on
-    the order.
+    Selfcontained profiles are just every mod in their one workspace. Layered
+    profiles merge their layers with later ones OVERWRITING earlier ones by
+    mod directory name -- that is what stage_layered() does when it copies,
+    and what the declared layer order is for. The linter has to model the
+    same thing, or it reports conflicts between two copies of a mod where
+    only one ever reaches the card (reskin/Skin-Marth vs nsfw/Skin-Marth
+    produced 60+ phantom errors).
     """
     prof = load_profiles().get(profile)
     if not prof:
         return []
-    # Later layers OVERWRITE earlier ones by mod directory name -- that is what
-    # stage_layered() does when it copies, and what the declared layer order is
-    # for. The linter has to model the same thing, or it reports conflicts
-    # between two copies of a mod where only one ever reaches the card
-    # (reskin/Skin-Marth vs nsfw/Skin-Marth produced 60+ phantom errors).
+    if prof.get("selfcontained"):
+        return all_mods(prof["selfcontained"])
     chosen: dict[str, Path] = {}
     for layer in prof.get("layers", []):
         for mod in all_mods(layer):
             chosen[mod.name] = mod
     return [chosen[k] for k in sorted(chosen)]
+
+
+def profiles_including_workspace(workspace: str) -> list[str]:
+    """Every profile that would install this workspace's mods -- as a layer,
+    or as its selfcontained workspace. Lets a mod's detail view answer "is
+    this mod part of any current profile" without the caller re-deriving
+    profiles.toml's layer/selfcontained logic itself."""
+    names = []
+    for name, prof in load_profiles().items():
+        if prof.get("selfcontained") == workspace or workspace in prof.get("layers", []):
+            names.append(name)
+    return sorted(names)
 
 
 def load_roster() -> dict:
@@ -175,6 +189,93 @@ def load_roster() -> dict:
         return {"mod": []}
     with ROSTER.open("rb") as fh:
         return tomllib.load(fh)
+
+
+def roster_entry(mod_name: str) -> dict | None:
+    """The [[mod]] entry in roster.toml matching an installed mod's directory
+    name, if any -- e.g. to recover the gamebanana_id a workspace mod came
+    from. Only mods actually pulled in through roster.toml/fetch.py have one;
+    hand-placed mods don't."""
+    entries = load_roster().get("mod", [])
+    for m in entries:
+        if m.get("name") == mod_name:
+            return m
+    # Workspace directories sometimes get an extra tag appended by hand after
+    # unpacking (e.g. "Shadow-The-Hedgehog" -> "Shadow-The-Hedgehog-{Moveset}-
+    # Shadow"), so fall back to a prefix match -- conservative enough to
+    # avoid matching unrelated mods, unlike a substring-anywhere match would.
+    lowered = mod_name.lower()
+    for m in entries:
+        name = m.get("name", "")
+        if name and lowered.startswith(name.lower()):
+            return m
+    return None
+
+
+def all_known_mods() -> list[dict]:
+    """Every mod this tool knows about, fetched or not.
+
+    Unifies workspace directories (already downloaded, in `workspaces/`) with
+    roster.toml entries (curated picks that may not be fetched yet) into one
+    deduplicated list, so a mod doesn't have to already be on disk to be
+    browsable and reassignable -- a profile is a composition of workspaces,
+    so "which workspace a mod targets" is what matters, whether or not it has
+    actually been unpacked there yet.
+
+    Each record: {"name", "path" (Path|None), "workspace" (str|None),
+    "fetched" (bool), "gamebanana_id" (int|None)}. path is None exactly when
+    fetched is False -- run Build to turn a pending pick into a real one.
+
+    Keyed by (workspace, name), NOT name alone: mods can legitimately share a
+    name across different workspaces by design (e.g. reskin/Skin-Marth vs
+    nsfw/Skin-Marth, so a later profile layer can override the earlier one by
+    name -- see profiles.toml's own header comment). Deduping by name alone
+    would silently collapse two distinct, real mods into one record.
+    """
+    records: dict[tuple[str, str], dict] = {}
+    fetched_names_by_workspace: dict[str, list[str]] = {}
+    for workspace in list_workspaces():
+        names = []
+        for path in all_mods(workspace):
+            entry = roster_entry(path.name)
+            records[(workspace, path.name)] = {
+                "name": path.name,
+                "path": path,
+                "workspace": workspace,
+                "fetched": True,
+                "gamebanana_id": entry.get("gamebanana_id") if entry else None,
+            }
+            names.append(path.name)
+        fetched_names_by_workspace[workspace] = names
+
+    for entry in load_roster().get("mod", []):
+        name = entry.get("name")
+        workspace = entry.get("workspace", "roster")
+        if not name:
+            continue
+        key = (workspace, name)
+        if key in records:
+            continue
+        # Same prefix-match fallback as roster_entry(), scoped to this
+        # entry's own target workspace: a pending pick whose name is a prefix
+        # of an already-fetched (and since-renamed) mod IN THAT WORKSPACE is
+        # already represented above -- don't list it twice.
+        lowered_name = name.lower()
+        already_fetched = any(
+            fetched.lower().startswith(lowered_name)
+            for fetched in fetched_names_by_workspace.get(workspace, [])
+        )
+        if already_fetched:
+            continue
+        records[key] = {
+            "name": name,
+            "path": None,
+            "workspace": workspace,
+            "fetched": False,
+            "gamebanana_id": entry.get("gamebanana_id"),
+        }
+
+    return sorted(records.values(), key=lambda r: (r["name"].lower(), r["workspace"] or ""))
 
 
 def sha256_file(path: Path) -> str:
@@ -208,3 +309,32 @@ def all_mods(workspace: str) -> list[Path]:
     if not base.is_dir():
         return []
     return sorted(p for p in base.iterdir() if p.is_dir() and not p.name.startswith("."))
+
+
+def list_workspaces() -> list[str]:
+    """Every workspace directory that actually exists on disk, sorted.
+
+    Not a fixed list: workspaces/ is a symlinked data directory that gains
+    new workspaces over time (e.g. a selfcontained total-conversion mod gets
+    its own), so anything that needs "every workspace" must look at the
+    filesystem rather than hardcode names that will drift out of date.
+    """
+    if not WORKSPACES.is_dir():
+        return []
+    return sorted(p.name for p in WORKSPACES.iterdir() if p.is_dir() and not p.name.startswith("."))
+
+
+def mod_info(path: Path) -> dict:
+    """Read a mod directory's optional info.toml. Empty dict if absent/unparseable.
+
+    Fields seen in the wild: display_name, description, authors, category --
+    none are guaranteed, so callers must treat every key as optional.
+    """
+    info_path = path / "info.toml"
+    if not info_path.is_file():
+        return {}
+    try:
+        with info_path.open("rb") as fh:
+            return tomllib.load(fh)
+    except (tomllib.TOMLDecodeError, OSError):
+        return {}

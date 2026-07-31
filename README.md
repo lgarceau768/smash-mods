@@ -20,6 +20,7 @@ and switching what's on the console is one deploy command.
 - [The two hard limits](#the-two-hard-limits-measured-not-folklore)
 - [Base stack](#base-stack-manifesttoml-all-pinned--checksummed)
 - [Commands](#commands)
+- [Documentation](#documentation)
 - [Save unlock](#save-unlock)
 - [Debugging on-console crashes](#debugging-on-console-crashes)
 - [Safety](#safety)
@@ -62,11 +63,8 @@ under `/media` or `/run/media`.
 
 ## Installation
 
-The repo has no remote yet — clone it however you're hosting it, or just work
-from a local checkout:
-
 ```bash
-git clone <this-repo> smash-mods   # or use your local path directly
+git clone git@github.com:lgarceau768/smash-mods.git
 cd smash-mods
 uv sync
 uv run smash-mods --help
@@ -154,10 +152,22 @@ next to Smashline 2; `verify.py` refuses the pairing.
 
 ## Commands
 
-`smash-mods` is a Typer + Rich CLI that wraps every script in `scripts/` as a
-subcommand. Run `smash-mods` with no arguments for an interactive menu
-covering all of the below, or `smash-mods <command> --help` for full flag
-docs.
+`smash-mods` is a Typer + Rich + Textual CLI that wraps every script in
+`scripts/` as a subcommand -- a Smash Ultimate modpack creator and deployer.
+Run `smash-mods` with no arguments for a full-screen interactive browser:
+**All mods** (top of the left nav) opens a dedicated explorer for everything
+you have data on, fetched or not: search, filter by workspace/status, sort,
+and a live preview pane with a thumbnail (local or a cached/lazily-fetched
+GameBanana screenshot) as you arrow through results -- with which profile(s)
+each mod is part of and a way to move/retarget it to a different workspace.
+Plain workspace browsing in the left nav filters the same data down to one
+category; profiles show what actually deploys; and every action in the
+ACTIONS section -- each with a plain-English description shown before you run
+it -- streams its output live inside the app (no dropping to a bare
+terminal). Curate surveys GameBanana and shows every candidate as a
+checklist (all selected by default) before pinning your picks into
+`roster.toml`. Or use `smash-mods <command> --help` for full flag docs on any
+of them directly.
 
 | Command | Wraps | Job |
 |---|---|---|
@@ -169,8 +179,12 @@ docs.
 | `smash-mods curate movesets\|skins\|nsfw [--report] [--write] [--limit N]` | `curate.py` / `curate_skins.py` / `curate_nsfw.py` | Survey GameBanana per category/fighter and pin picks into `roster.toml` |
 | `smash-mods dedupe --layer NAME [--against NAME] [--commit]` | `dedupe_layer.py` | Resolve skin-vs-roster conflicts: strips global DB copies, inherited-slot animations, duplicate assets |
 | `smash-mods unlock-save <path> [--commit]` | `unlock_save.py` | Unlock all 86 fighters in a JKSV-exported save |
+| `smash-mods create-profile NAME --description TEXT [--layers a,b,c \| --selfcontained NAME] [--no-base]` | `profile_edit.py` | Add a new profile (layered or selfcontained) to `profiles.toml` |
+| `smash-mods move-mod NAME --from WORKSPACE --to WORKSPACE` (or `--pending --to WORKSPACE` if not fetched yet) | `move_mod.py` | Move a mod to a different workspace, changing which profiles it's part of |
+| `smash-mods create-workspace NAME` | `create_workspace.py` | Add a new, empty workspace -- needed before building a truly custom profile |
 | `smash-mods profiles` | *(none — reads `profiles.toml` directly)* | Colorized table of all profiles + status |
-| `smash-mods` *(no args)* | *(none)* | Interactive Rich-based menu covering all of the above |
+| `smash-mods` *(no args)* | *(none)* | Full-screen Textual browser: All Mods, workspaces, profiles, roster picks, mod details (with GameBanana descriptions/images), profile creation, and every action above with live in-app output |
+| `smash-mods --first-time` | *(none)* | Show the welcome/help tour (shown automatically the first time, and any time via `?` inside the app) |
 
 Not surfaced as a subcommand but still used internally by `build`: `fetch.py`
 (download every pinned component; sha256/md5 verified; polite rate-limit
@@ -188,6 +202,24 @@ raw-file conflicts (what ARCropolis actually prompts about; patch formats
 exempt), the plugin budget, zero-byte binary assets, moveset-vs-reskin writes
 to inherited vanilla slots, display-name typos (`bowser`→`koopa`), FAT32
 hazards, nesting, junk. 19 regression fixtures: `python3 tests/test_verify.py`.
+
+## Documentation
+
+This README covers the pipeline and the pinned base stack; the interactive
+CLI and its data model have their own focused docs:
+
+- [`docs/data-model.md`](docs/data-model.md) — workspaces, profiles,
+  roster.toml, and how a mod moves through them (curate → pin → fetch →
+  workspace → profile → deploy). Read this first if "workspace" vs "profile"
+  vs "roster.toml" isn't clicking yet.
+- [`docs/tui.md`](docs/tui.md) — the full-screen interactive browser: the
+  All Mods explorer, navigation, every action, the safety/confirm model, and
+  keybindings.
+- [`docs/architecture.md`](docs/architecture.md) — for anyone changing the
+  code: how `scripts/`, `smash_mods_cli/commands.py`, and `smash_mods_cli/tui/`
+  fit together, and the handful of non-obvious design decisions (why actions
+  stream output live instead of shelling out to a raw terminal, why
+  `textual-image` has to be imported before the app starts, etc).
 
 ## Save unlock
 
@@ -234,6 +266,13 @@ the whole stack is pinned to 13.0.4.
 
 ## Adding more characters
 
+Interactively (recommended): `smash-mods` with no args → **ACTIONS → Curate**
+→ pick movesets → review the checklist (everything survey found viable is
+selected by default; uncheck what you don't want) → pin → you're prompted to
+run Build right there.
+
+Or by hand:
+
 ```bash
 smash-mods curate movesets --report --limit 60   # browse
 # add a [[mod]] entry to roster.toml (id + md5), then:
@@ -256,7 +295,7 @@ The `scripts/` directory has **zero third-party dependencies** — every script
 is stdlib-only Python 3.11+ (using `tomllib` for TOML) or POSIX shell, so any
 of them can be run directly without the package installed, e.g.
 `python3 scripts/verify.py` or `./scripts/build.sh`. The `smash-mods` CLI
-(Typer + Rich) is purely a front end over these scripts.
+(Typer + Rich + Textual) is purely a front end over these scripts.
 
 ## License
 

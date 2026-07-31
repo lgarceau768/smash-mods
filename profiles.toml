@@ -63,3 +63,9 @@ description = "Roster + full reskin, with adult skins swapped in where available
 base = true
 layers = ["roster", "reskin", "nsfw"]
 status = "untested"
+
+[luke-testing]
+description = "my testing profile for testing this wizard"
+base = false
+selfcontained = "roster"
+status = "untested"

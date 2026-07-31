@@ -132,27 +132,40 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--json", action="store_true",
+                     help="emit machine-readable candidate JSON instead of a human report (implies --report)")
+    ap.add_argument("--write-ids", help="comma-separated GameBanana ids to write, instead of every viable pick")
     ap.add_argument("--limit", type=int, default=0, help="cap the fighter count")
     args = ap.parse_args()
 
-    info("listing character subcategories ...")
+    if not args.json:
+        info("listing character subcategories ...")
     subs = [c for c in get(SUBCATS.format(cat=SKINS_CATEGORY))
             if c["_sName"] not in SKIP_SUBCATS and c.get("_nItemCount", 0) > 0]
     if args.limit:
         subs = subs[:args.limit]
-    info(f"{len(subs)} character subcategories")
+    if not args.json:
+        info(f"{len(subs)} character subcategories")
 
     avoid = roster_characters()
-    info(f"avoiding {len(avoid)} characters already on the roster")
+    if not args.json:
+        info(f"avoiding {len(avoid)} characters already on the roster")
     picks = []
     for i, sc in enumerate(subs, 1):
         p = pick_for(sc, avoid)
         if p:
             picks.append(p)
-        print(f"\r  scanned {i}/{len(subs)}", end="", flush=True)
+        # Progress goes to stderr (not suppressed in --json mode) so a caller
+        # capturing stdout for the final JSON can still show live progress.
+        print(f"\r  scanned {i}/{len(subs)}", end="", flush=True, file=sys.stderr)
         time.sleep(0.15)
-    print()
-    info(f"{len(picks)} fighters have a viable recent skin")
+    print(file=sys.stderr)
+    if not args.json:
+        info(f"{len(picks)} fighters have a viable recent skin")
+
+    if args.json:
+        print(json.dumps(picks))
+        return 0
 
     if args.report:
         print()
@@ -165,7 +178,10 @@ def main() -> int:
             warn(f"no viable skin found for {len(missing)}: "
                  f"{', '.join(sorted(missing))}")
 
-    if not args.write:
+    if args.write_ids:
+        wanted = {int(x) for x in args.write_ids.split(",") if x.strip()}
+        picks = [p for p in picks if p["id"] in wanted]
+    elif not args.write:
         return 0
 
     info("resolving downloads ...")

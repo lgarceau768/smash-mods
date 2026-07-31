@@ -3,7 +3,7 @@
 Every subcommand below does the minimum: parse its own flags, hand them to
 the matching plain function in commands.py (or profiles_view.py), and exit
 with that function's return code. The functions themselves are shared with
-the interactive menu in menu.py, so the two front ends can never drift.
+the full-screen TUI in tui/, so the two front ends can never drift.
 
 Every wrapped script keeps working completely unchanged when invoked
 directly -- this is a layer on top, not a replacement.
@@ -17,8 +17,8 @@ from typing import Annotated, List, Optional
 import typer
 
 from . import commands
-from .menu import run_menu
 from .profiles_view import profiles_cmd
+from .tui import run_tui
 
 app = typer.Typer(
     name="smash-mods",
@@ -27,7 +27,7 @@ app = typer.Typer(
         "profiles for a CFW Switch.\n\n"
         "Every subcommand wraps an existing script under scripts/ -- nothing "
         "here changes their behaviour, it just gives them one polished front "
-        "door. Run with no subcommand for an interactive menu."
+        "door. Run with no subcommand for a full-screen interactive browser."
     ),
     no_args_is_help=False,
     add_completion=True,
@@ -48,10 +48,18 @@ app.add_typer(toggle_app, name="toggle")
 
 
 @app.callback(invoke_without_command=True)
-def _root(ctx: typer.Context) -> None:
+def _root(
+    ctx: typer.Context,
+    first_time: Annotated[
+        bool,
+        typer.Option(
+            "--first-time", help="Show the welcome/help tour, whether or not you've seen it before."
+        ),
+    ] = False,
+) -> None:
     """smash-mods: build, verify, deploy, and manage a modded Smash Ultimate SD card."""
     if ctx.invoked_subcommand is None:
-        raise typer.Exit(code=run_menu())
+        raise typer.Exit(code=run_tui(first_time=first_time))
 
 
 # --- build -------------------------------------------------------------
@@ -242,6 +250,51 @@ def unlock_save(
 ) -> None:
     """Unlock every fighter in a save file so added characters' host slots are reachable. Wraps scripts/unlock_save.py (still works standalone)."""
     raise typer.Exit(code=commands.unlock_save_cmd(str(save), commit=commit))
+
+
+# --- create-profile -------------------------------------------------------
+
+@app.command(name="create-profile")
+def create_profile(
+    name: Annotated[str, typer.Argument(help="New profile's name -- becomes its table name in profiles.toml.")],
+    description: Annotated[str, typer.Option(help="One-line description shown in `smash-mods profiles`.")],
+    layers: Annotated[
+        Optional[str], typer.Option(help="Comma-separated workspace names, later wins, e.g. roster,reskin.")
+    ] = None,
+    selfcontained: Annotated[
+        Optional[str], typer.Option(help="A single workspace that ships its own base stack (e.g. hdr).")
+    ] = None,
+    base: Annotated[bool, typer.Option(help="Install the pinned base stack. Ignored with --selfcontained.")] = True,
+) -> None:
+    """Add a new profile to profiles.toml. Wraps scripts/profile_edit.py (still works standalone)."""
+    layer_list = [l.strip() for l in layers.split(",") if l.strip()] if layers else None
+    raise typer.Exit(
+        code=commands.create_profile_cmd(
+            name, description=description, layers=layer_list, selfcontained=selfcontained, base=base
+        )
+    )
+
+
+# --- move-mod ---------------------------------------------------------------
+
+@app.command(name="move-mod")
+def move_mod(
+    name: Annotated[str, typer.Argument(help="Mod's directory name, e.g. Skin-Marth.")],
+    from_workspace: Annotated[str, typer.Option("--from", help="Workspace the mod currently lives in.")],
+    to_workspace: Annotated[str, typer.Option("--to", help="Workspace to move it into.")],
+) -> None:
+    """Move a mod to a different workspace -- changes which profiles it's part of. Wraps scripts/move_mod.py (still works standalone)."""
+    raise typer.Exit(code=commands.move_mod_cmd(name, from_workspace=from_workspace, to_workspace=to_workspace))
+
+
+# --- create-workspace ---------------------------------------------------------
+
+@app.command(name="create-workspace")
+def create_workspace(
+    name: Annotated[str, typer.Argument(help="New workspace's name, e.g. my-custom-layer.")],
+) -> None:
+    """Create a new, empty workspace -- a category to move mods into and reference from a custom profile. Wraps scripts/create_workspace.py (still works standalone)."""
+    raise typer.Exit(code=commands.create_workspace_cmd(name))
 
 
 if __name__ == "__main__":
